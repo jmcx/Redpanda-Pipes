@@ -43,6 +43,9 @@ metadata:
     triggermesh.io/context: triggermesh
   name: broker-to-kafka
 spec:
+  filters:
+  - exact:
+      type: transformed.event
   broker:
     group: eventing.triggermesh.io
     kind: RedisBroker
@@ -52,3 +55,46 @@ spec:
       apiVersion: targets.triggermesh.io/v1alpha1
       kind: KafkaTarget
       name: kafka-target
+
+---
+
+apiVersion: flow.triggermesh.io/v1alpha1
+kind: Transformation
+metadata:
+  name: triggermesh-transformation
+spec:
+  context:
+  - operation: add
+    paths:
+    - key: type
+      value: transformed.event
+  data:
+  - operation: delete
+    paths:
+    - {}
+  - operation: add
+    paths:
+    - key: new
+      value: message
+
+---
+
+apiVersion: eventing.triggermesh.io/v1alpha1
+kind: Trigger
+metadata:
+  labels:
+    triggermesh.io/context: triggermesh
+  name: broker-to-transformation
+spec:
+  filters:
+  - exact:
+      type: io.triggermesh.kafka.event
+  broker:
+    group: eventing.triggermesh.io
+    kind: RedisBroker
+    name: triggermesh
+  target:
+    ref:
+      apiVersion: flow.triggermesh.io/v1alpha1
+      kind: Transformation
+      name: triggermesh-transformation
