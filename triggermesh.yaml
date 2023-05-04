@@ -1,0 +1,53 @@
+apiVersion: eventing.triggermesh.io/v1alpha1
+kind: RedisBroker
+metadata:
+  labels:
+    triggermesh.io/context: triggermesh
+  name: triggermesh
+
+---
+
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: KafkaSource
+metadata:
+  name: kafka-source
+spec:
+  groupID: mygroup
+  bootstrapServers:
+    - one-node-cluster-0.one-node-cluster.panda-pipes.svc.cluster.local.:9092
+  topic: source-topic
+  sink:
+    ref:
+      apiVersion: eventing.triggermesh.io/v1alpha1
+      kind: RedisBroker
+      name: triggermesh
+
+---
+
+apiVersion: targets.triggermesh.io/v1alpha1
+kind: KafkaTarget
+metadata:
+  name: kafka-target
+spec:
+  bootstrapServers:
+  - one-node-cluster-0.one-node-cluster.panda-pipes.svc.cluster.local.:9092
+  topic: target-topic
+
+---
+
+apiVersion: eventing.triggermesh.io/v1alpha1
+kind: Trigger
+metadata:
+  labels:
+    triggermesh.io/context: triggermesh
+  name: broker-to-kafka
+spec:
+  broker:
+    group: eventing.triggermesh.io
+    kind: RedisBroker
+    name: triggermesh
+  target:
+    ref:
+      apiVersion: targets.triggermesh.io/v1alpha1
+      kind: KafkaTarget
+      name: kafka-target
